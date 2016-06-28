@@ -26,6 +26,7 @@ func (nw *Network) Init() {
 	}
 
 	laddr := nw.Conn.LocalAddr().(*net.UDPAddr)
+	// 初始化dht监听的ip和port
 	nw.Dht.node.Ip = laddr.IP
 	nw.Dht.node.Port = laddr.Port
 }

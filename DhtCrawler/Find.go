@@ -36,7 +36,7 @@ func (dhtNode *DhtNode) FindNode(node *KNode) {
 	raddr := new(net.UDPAddr)
 	raddr.IP = node.Ip
 	raddr.Port = node.Port
-
+	// 向节点发送信息
 	err = dhtNode.network.Send([]byte(data), raddr)
 	if err != nil {
 		dhtNode.log.Println(err)
@@ -47,7 +47,9 @@ func (dhtNode *DhtNode) NodeFinder() {
 
 	for {
 		//	dhtNode.log.Println(len(dhtNode.table.Nodes), "port: ==== ", dhtNode.node.Port)
+		// 查找节点信息 向bootstrap里面的配置节点发送 find_node 信息
 
+		// 如果桶里面节点为空
 		if len(dhtNode.table.Nodes) == 0 {
 			for _, host := range BOOTSTRAP {
 				raddr, err := net.ResolveUDPAddr("udp", host)
@@ -66,6 +68,8 @@ func (dhtNode *DhtNode) NodeFinder() {
 			for _, node := range dhtNode.table.Nodes {
 				dhtNode.FindNode(node)
 			}
+			// 清空节点 再次随机找节点
+			// 为了方便更多节点匹配出来
 			dhtNode.table.Nodes = nil
 			time.Sleep(1 * time.Second)
 		}

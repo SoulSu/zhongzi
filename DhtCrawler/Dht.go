@@ -21,11 +21,17 @@ func NewDhtNode(id *Id, logger io.Writer, outHashIdChan chan string, master chan
 	node.Id = *id
 
 	dht := new(DhtNode)
+	// 用于数据传递的chan
 	dht.outChan = outHashIdChan
+	// 生成一个日志器
 	dht.log = log.New(logger, "", log.Ldate|log.Ltime|log.Lmicroseconds|log.Lshortfile)
+	// 自己的节点信息
 	dht.node = node
+
 	dht.table = new(KTable)
+	// 初始化本地监听udp的端口信息
 	dht.network = NewNetwork(dht)
+
 	dht.krpc = NewKRPC(dht)
 	dht.master = master
 

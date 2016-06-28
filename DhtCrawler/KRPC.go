@@ -31,6 +31,8 @@ func (krpc *KRPC) autoID() uint32 {
 	return atomic.AddUint32(&krpc.tid, 1)
 }
 
+// 将接收到的数据在这里处理
+//
 func (krpc *KRPC) Decode(data string, raddr *net.UDPAddr) error {
 	val := make(map[string]interface{})
 
@@ -84,6 +86,7 @@ func (krpc *KRPC) Decode(data string, raddr *net.UDPAddr) error {
 
 func (krpc *KRPC) Response(msg *KRPCMessage) {
 	if response, ok := msg.Addion.(*Response); ok {
+		// 这是 find_node 发送后返回的节点信息
 		if nodestr, ok := response.R["nodes"].(string); ok {
 			nodes := ParseBytesStream([]byte(nodestr))
 			for _, node := range nodes {
@@ -95,13 +98,13 @@ func (krpc *KRPC) Response(msg *KRPCMessage) {
 
 func (krpc *KRPC) Query(msg *KRPCMessage) {
 	if query, ok := msg.Addion.(*Query); ok {
-
+		// 查询端
 		if query.Y == "get_peers" {
 
 			if infohash, ok := query.A["info_hash"].(string); ok {
-
+				// 理论上这个 infohash十可靠的
 				krpc.Dht.outChan <- Id(infohash).String()
-
+				// 把自己现在保存的snode 发送给查询的地址
 				nodes := ConvertByteStream(krpc.Dht.table.Snodes)
 				data, _ := krpc.EncodingNodeResult(msg.T, "asdf13e", nodes)
 				krpc.Dht.network.Send([]byte(data), msg.Addr)
@@ -109,6 +112,7 @@ func (krpc *KRPC) Query(msg *KRPCMessage) {
 		}
 
 		if query.Y == "announce_peer" {
+			// 这里的infohash不是可靠的
 			if infohash, ok := query.A["info_hash"].(string); ok {
 				krpc.Dht.outChan <- Id(infohash).String()
 			}
