@@ -59,7 +59,8 @@ func (dht *DhtNode) Run() {
 	go func() {
 		err := http.ListenAndServe(fmt.Sprintf(":%d", dht.expVarPort), nil)
 		if err != nil {
-			panic(err.Error())
+			dht.log.Println(err.Error())
+			return
 		}
 		// 统计redis中hashinfo信息
 		//for {
