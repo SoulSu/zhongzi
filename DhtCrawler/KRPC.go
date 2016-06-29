@@ -57,7 +57,7 @@ func (krpc *KRPC) Decode(data string, raddr *net.UDPAddr) error {
 		switch message.Y {
 		case "q":
 			query := new(Query)
-			query.Y = val["q"].(string)
+			query.Y = val["q"].(string) //
 			query.A = val["a"].(map[string]interface{})
 			message.Addion = query
 			break
@@ -65,6 +65,10 @@ func (krpc *KRPC) Decode(data string, raddr *net.UDPAddr) error {
 			res := new(Response)
 			res.R = val["r"].(map[string]interface{})
 			message.Addion = res
+			break
+		case "e":
+			// {"t":"aa", "y":"e", "e":[201, "A Generic Error Ocurred"]}
+			krpc.Dht.log.Println("get error:", val["e"])
 			break
 		default:
 			krpc.Dht.log.Println("invalid message")
@@ -98,9 +102,13 @@ func (krpc *KRPC) Response(msg *KRPCMessage) {
 
 func (krpc *KRPC) Query(msg *KRPCMessage) {
 	if query, ok := msg.Addion.(*Query); ok {
+		if query.Y == "ping" {
+			KRPC_PING_COUNT.Add(1)
+
+		}
 		// 查询端
 		if query.Y == "get_peers" {
-
+			KRPC_GET_PEERS_COUNT.Add(1)
 			if infohash, ok := query.A["info_hash"].(string); ok {
 				// 理论上这个 infohash十可靠的
 				krpc.Dht.outChan <- Id(infohash).String()
@@ -112,6 +120,7 @@ func (krpc *KRPC) Query(msg *KRPCMessage) {
 		}
 
 		if query.Y == "announce_peer" {
+			KRPC_ANNOUNCE_PEER_COUNT.Add(1)
 			// 这里的infohash不是可靠的
 			if infohash, ok := query.A["info_hash"].(string); ok {
 				krpc.Dht.outChan <- Id(infohash).String()
@@ -141,16 +150,16 @@ func convertIPPort(buf *bytes.Buffer, ip net.IP, port int) {
 func ParseBytesStream(data []byte) []*KNode {
 	var nodes []*KNode = nil
 	for j := 0; j < len(data); j = j + 26 {
-		if j+26 > len(data) {
+		if j + 26 > len(data) {
 			break
 		}
 
-		kn := data[j : j+26]
+		kn := data[j : j + 26]
 		node := new(KNode)
 		node.Id = Id(kn[0:20])
 		node.Ip = kn[20:24]
 		port := kn[24:26]
-		node.Port = int(port[0])<<8 + int(port[1])
+		node.Port = int(port[0]) << 8 + int(port[1])
 		nodes = append(nodes, node)
 	}
 	return nodes
@@ -162,10 +171,16 @@ type KRPCMessage struct {
 	Addion interface{}
 	Addr   *net.UDPAddr
 }
-
+/**
+ping 
+ping Query = {"t":"aa", "y":"q", "q":"ping", "a":{"id":"abcdefghij0123456789"}}
+bencoded = d1:ad2:id20:abcdefghij0123456789e1:q4:ping1:t2:aa1:y1:qe
+Response = {"t":"aa", "y":"r", "r": {"id":"mnopqrstuvwxyz123456"}}
+bencoded = d1:rd2:id20:mnopqrstuvwxyz123456e1:t2:aa1:y1:re
+ */
 type Query struct {
-	Y string
-	A map[string]interface{}
+	Y string // 请求的方法
+	A map[string]interface{} // 附加的请求字段
 }
 
 type Response struct {

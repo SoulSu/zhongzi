@@ -6,8 +6,8 @@ import
 	"os"
 	"runtime"
 
-	"github.com/garyburd/redigo/redis"
 	"zhongzi/DhtCrawler"
+	"zhongzi/save/redis"
 )
 
 var (
@@ -32,23 +32,21 @@ func init() {
 	for i := 0; i < max_process; i++ {
 		go func() {
 			id := DhtCrawler.GenerateID()
-			dhtNode := DhtCrawler.NewDhtNode(&id, zhongzi_log_file, outHashIdChan, master)
+			dhtNode := DhtCrawler.NewDhtNode(&id, zhongzi_log_file, outHashIdChan, master, 8888)
 			dhtNode.Run()
 		}()
 	}
 
+
+
 }
 
 func redis_set(key, value string) {
-	red, err := redis.Dial("tcp", "127.0.0.1:6379")
-	if err != nil {
-		panic(err.Error())
-	}
+	rds := redis.Get()
 
-	defer red.Close()
+	defer rds.Close()
 
-	red.Do("SET", key, value)
-
+	rds.Do("SET", key, value)
 }
 
 func main() {
