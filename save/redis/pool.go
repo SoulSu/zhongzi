@@ -7,21 +7,16 @@ import (
 
 var redisPool *redis.Pool
 
-var (
-	Server = "123.184.17.14:6379"
-	Password = "c47d13bdcbb63cf0f38159f9e44c0f38b63efe86"
-)
-
-func init() {
+func redis_init() {
 	redisPool = &redis.Pool{
 		MaxIdle: 3,
 		IdleTimeout: 60 * time.Second,
 		Dial: func() (redis.Conn, error) {
-			c, err := redis.Dial("tcp", Server)
+			c, err := redis.Dial("tcp", *REDIS_HOST)
 			if err != nil {
 				return nil, err
 			}
-			if _, err := c.Do("AUTH", Password); err != nil {
+			if _, err := c.Do("AUTH", *REDIS_PWD); err != nil {
 				c.Close()
 				return nil, err
 			}

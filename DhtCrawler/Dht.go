@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"net/http"
 )
 
 type DhtNode struct {
@@ -15,7 +14,6 @@ type DhtNode struct {
 	master     chan string
 	krpc       *KRPC
 	outChan    chan string
-	expVarPort int
 }
 
 func NewDhtNode(id *Id, logger io.Writer, outHashIdChan chan string, master chan string, expVarPort int) *DhtNode {
@@ -37,8 +35,6 @@ func NewDhtNode(id *Id, logger io.Writer, outHashIdChan chan string, master chan
 	dht.krpc = NewKRPC(dht)
 	dht.master = master
 
-	dht.expVarPort = expVarPort
-
 	return dht
 }
 
@@ -54,30 +50,6 @@ func (dht *DhtNode) Run() {
 		dht.NodeFinder()
 	}()
 
-
-	// dht统计信息服务
-	go func() {
-		err := http.ListenAndServe(fmt.Sprintf(":%d", dht.expVarPort), nil)
-		if err != nil {
-			dht.log.Println(err.Error())
-			return
-		}
-		// 统计redis中hashinfo信息
-		//for {
-		//	go func() {
-		//		rds := redis.Get()
-		//		defer rds.Close()
-		//
-		//		inf, _ := rds.Do("info", "Keyspace")
-		//		REDIS_HASH_INFO_COUNT.Set(fmt.Sprintf("%v", inf))
-		//
-		//	}()
-		//	// 10s 统计一次
-		//	time.Sleep(time.Second * 10)
-		//}
-	}()
-
-	dht.log.Println("start expvar on", dht.expVarPort)
 	dht.log.Println(fmt.Sprintf("DhtCrawler %s is runing...", dht.network.Conn.LocalAddr().String()))
 	for {
 		select {

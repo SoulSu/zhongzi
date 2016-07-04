@@ -8,6 +8,8 @@ import
 
 	"zhongzi/DhtCrawler"
 	"zhongzi/save/redis"
+	"net/http"
+	"flag"
 )
 
 var (
@@ -38,7 +40,13 @@ func init() {
 	}
 
 
-
+	// dht统计信息服务
+	go func() {
+		err := http.ListenAndServe(fmt.Sprintf(":%d", 8888), nil)
+		if err != nil {
+			return
+		}
+	}()
 }
 
 func redis_set(key, value string) {
@@ -50,6 +58,8 @@ func redis_set(key, value string) {
 }
 
 func main() {
+
+	flag.Parse()
 
 	runtime.GOMAXPROCS(max_process)
 

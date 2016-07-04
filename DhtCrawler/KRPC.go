@@ -6,6 +6,7 @@ import (
 	"math"
 	"net"
 	"sync/atomic"
+	"fmt"
 )
 
 type action func(arg map[string]interface{}, raddr *net.UDPAddr)
@@ -111,7 +112,7 @@ func (krpc *KRPC) Query(msg *KRPCMessage) {
 			KRPC_GET_PEERS_COUNT.Add(1)
 			if infohash, ok := query.A["info_hash"].(string); ok {
 				// 理论上这个 infohash十可靠的
-				krpc.Dht.outChan <- Id(infohash).String()
+				krpc.Dht.outChan <- fmt.Sprintf("get_%s",Id(infohash).String())
 				// 把自己现在保存的snode 发送给查询的地址
 				nodes := ConvertByteStream(krpc.Dht.table.Snodes)
 				data, _ := krpc.EncodingNodeResult(msg.T, "asdf13e", nodes)
@@ -123,7 +124,7 @@ func (krpc *KRPC) Query(msg *KRPCMessage) {
 			KRPC_ANNOUNCE_PEER_COUNT.Add(1)
 			// 这里的infohash不是可靠的
 			if infohash, ok := query.A["info_hash"].(string); ok {
-				krpc.Dht.outChan <- Id(infohash).String()
+				krpc.Dht.outChan <- fmt.Sprintf("announce_%s",Id(infohash).String())
 			}
 		}
 	}
