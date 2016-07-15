@@ -2,7 +2,7 @@ package main
 
 import (
 	"net/http"
-	"zhongzi/server"
+	"zhongzi/meta"
 	"log"
 	"fmt"
 	"encoding/json"
@@ -12,7 +12,7 @@ func main() {
 
 	http.HandleFunc("/get", get_metainfo)
 
-	http.ListenAndServe(":9090", nil)
+	http.ListenAndServe(":9091", nil)
 
 }
 
